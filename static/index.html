@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather App-JWT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-blue-400 to-blue-600 min-h-screen flex flex-col items-center p-4">
+  <div class="w-full max-w-2xl">
+    <!-- Title -->
+    <h1 class="text-4xl font-bold text-white mb-6 drop-shadow-lg">🌦️ Weather App </h1>
+
+    <!-- Login Form -->
+    <div id="login-section" class="bg-white rounded-xl shadow-md p-6 w-96 text-center mb-6">
+      <h2 class="text-xl font-semibold mb-3">🔐 Login</h2>
+      <input type="text" id="login-username" placeholder="Username" class="mb-2 px-3 py-2 rounded border w-full" autocomplete="username" />
+      <input type="password" id="login-password" placeholder="Password" class="mb-2 px-3 py-2 rounded border w-full" autocomplete="current-password" />
+      <button id="login-btn" class="bg-blue-700 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-800 transition w-full">Login</button>
+      <p id="login-message" class="text-red-600 mt-2" aria-live="polite"></p>
+      <button onclick="showRegisterModal()" class="mt-4 text-blue-700 underline">Don't have an account? Register</button>
+       <button onclick="showForgotPasswordModal()" class="text-blue-700 underline">Forgot Password?</button>
+    </div>
+
+    <!-- Weather Search -->
+    <div id="app-section" style="display:none;">
+      <div class="flex space-x-2 mb-6">
+        <input type="text" id="cityInput" placeholder="Enter city" class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow w-full" />
+        <button onclick="getWeather()" class="bg-blue-700 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-800 transition">Search</button>
+        <button onclick="geolocation()" class="bg-green-400 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600 transition">Geolocation</button>
+        <button onclick="logout()" class="bg-gray-400 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600 transition">Logout</button>
+         
+      </div>
+
+      <div class="flex space-x-6">
+        <!-- Weather info box -->
+        <div id="weather" class="bg-white rounded-2xl shadow-xl p-6 w-80 text-center">
+          <p class="text-gray-500">Enter a city to see weather 🌍</p> 
+        </div>
+
+        <!-- Recent Searches box -->
+        <div id="recent" class="bg-white rounded-xl shadow-md p-4 w-64 text-center mt-4">
+          <h3 class="text-lg font-semibold mb-2">🕒 Recent Searches</h3>
+          <ul id="recentList" class="space-y-1 text-gray-700 text-sm"></ul>
+        </div>
+
+        <!-- Favorites box -->
+        <div id="favorites" class="bg-white rounded-xl shadow-md p-4 w-64 text-center mt-4">
+          <h3 class="text-lg font-semibold mb-2">⭐ Favorites</h3>
+          <ul id="favoritesList" class="space-y-1 text-gray-700 text-sm"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div id="register-modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden">
+      <div class="bg-white rounded-xl shadow-md p-6 w-96 text-center relative">
+        <button onclick="closeRegisterModal()" class="absolute top-2 right-2 text-gray-500 hover:text-gray-900 text-xl">&times;</button>
+        <h2 class="text-xl font-semibold mb-3">📝 Register</h2>
+        <input type="text" id="register-username" placeholder="Username" class="mb-2 px-3 py-2 rounded border w-full" autocomplete="username" />
+        <input type="password" id="register-password" placeholder="Password" class="mb-2 px-3 py-2 rounded border w-full" autocomplete="new-password" />
+        <button onclick="register()" id="register-btn" class="bg-blue-700 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-800 transition w-full">Register</button>
+        <p id="register-message" class="text-red-600 mt-2" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+  <!-- Forgot Password Modal -->
+   
+<div id="forgot-modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden">
+  <div class="bg-white rounded-xl shadow-md p-6 w-96 text-center relative">
+    <button onclick="closeForgotModal()" class="absolute top-2 right-2 text-gray-500 hover:text-gray-900 text-xl">&times;</button>
+    <h2 class="text-xl font-semibold mb-3">🔑 Reset Password</h2>
+
+    <input type="text" id="forgot-username" placeholder="Username" class="mb-2 px-3 py-2 rounded border w-full" />
+    <input type="password" id="forgot-new-password" placeholder="New Password" class="mb-2 px-3 py-2 rounded border w-full" />
+    <input type="password" id="forgot-confirm-password" placeholder="Confirm New Password" class="mb-2 px-3 py-2 rounded border w-full" />
+
+    <p id="forgot-msg" class="text-sm text-red-600 mt-1" aria-live="polite"></p>
+
+    <button id="forgot-btn" disabled class="mt-3 bg-blue-700 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-800 transition w-full">
+      Reset Password
+    </button>
+  </div>
+</div>
+
+
+  <!-- Fixed Working JavaScript -->
+  <script>
+    const backendURL = "http://127.0.0.1:8000";
+    let jwtToken = localStorage.getItem("jwtToken") || null;
+    let recentSearches = [];
+    let favorites = [];
+
+    function showApp() {
+      document.getElementById("login-section").style.display = "none";
+      document.getElementById("app-section").style.display = "";
+    }
+    function showLogin() {
+      document.getElementById("login-section").style.display = "";
+      document.getElementById("app-section").style.display = "none";
+      clearLoginFields();
+    }
+    function clearLoginFields() {
+      document.getElementById("login-username").value = "";
+      document.getElementById("login-password").value = "";
+      document.getElementById("login-message").textContent = "";
+    }
+    function showRegisterModal() {
+      document.getElementById("register-modal").style.display = "flex";
+      document.getElementById("register-username").value = "";
+      document.getElementById("register-password").value = "";
+      document.getElementById("register-message").textContent = "";
+    }
+    function closeRegisterModal() {
+      document.getElementById("register-modal").style.display = "none";
+    }
+
+    async function login() {
+      const username = document.getElementById("login-username").value.trim();
+      const password = document.getElementById("login-password").value.trim();
+      const message = document.getElementById("login-message");
+      const btn = document.getElementById("login-btn");
+      message.textContent = "";
+      btn.disabled = true;
+      btn.textContent = "Logging in...";
+      if (!username || !password) {
+        message.textContent = "Please enter both username and password.";
+        btn.disabled = false;
+        btn.textContent = "Login";
+        return;
+      }
+      try {
+        const res = await fetch(`${backendURL}/token`, {
+          method: "POST",
+          headers: {"Content-Type": "application/x-www-form-urlencoded"},
+          body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+        });
+        const data = await res.json();
+        if (res.ok && data.access_token) {
+          jwtToken = data.access_token;
+          localStorage.setItem("jwtToken", jwtToken);
+          showApp();
+        } else {
+          message.textContent = data.detail || "Login failed";
+        }
+      } catch (error) {
+        message.textContent = "Network error";
+      }
+      btn.disabled = false;
+      btn.textContent = "Login";
+    }
+
+    function logout() {
+      jwtToken = null;
+      localStorage.removeItem("jwtToken");
+      showLogin();
+      document.getElementById("weather").innerHTML = `<p class="text-gray-500">Enter a city to see weather 🌍</p>`;
+      document.getElementById("cityInput").value = "";
+    }
+
+    async function register() {
+      const username = document.getElementById("register-username").value.trim();
+      const password = document.getElementById("register-password").value.trim();
+      const message = document.getElementById("register-message");
+      const btn = document.getElementById("register-btn");
+      message.textContent = "";
+      btn.disabled = true;
+      btn.textContent = "Registering...";
+      if (!username || !password) {
+        message.textContent = "Please enter both username and password.";
+        btn.disabled = false;
+        btn.textContent = "Register";
+        return;
+      }
+      try {
+        const res = await fetch(`${backendURL}/register`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          message.textContent = "Registration successful! Please log in.";
+          setTimeout(() => {
+            closeRegisterModal();
+            showLogin();
+            document.getElementById("login-message").textContent = "Registration successful! You can now log in.";
+          }, 1000);
+        } else {
+          message.textContent = data.detail || "Registration failed";
+        }
+      } catch (error) {
+        message.textContent = "Network error";
+      }
+      btn.disabled = false;
+      btn.textContent = "Register";
+    }
+    // ---------- Modal helpers ----------
+function showForgotPasswordModal(){
+  document.getElementById("forgot-modal").style.display = "flex";
+  document.getElementById("forgot-username").value = "";
+  document.getElementById("forgot-new-password").value = "";
+  document.getElementById("forgot-confirm-password").value = "";
+  document.getElementById("forgot-msg").textContent = "";
+  document.getElementById("forgot-btn").disabled = true;
+}
+function closeForgotModal(){
+  document.getElementById("forgot-modal").style.display = "none";
+}
+
+// ---------- Live validation: enable button only when both passwords match ----------
+const forgotNewInput = document.getElementById("forgot-new-password");
+const forgotConfirmInput = document.getElementById("forgot-confirm-password");
+const forgotBtn = document.getElementById("forgot-btn");
+const forgotMsg = document.getElementById("forgot-msg");
+
+function validateForgotPasswords(){
+  const a = document.getElementById("forgot-new-password").value;
+  const b = document.getElementById("forgot-confirm-password").value;
+  if (!a && !b) {
+    forgotMsg.textContent = "";
+    forgotBtn.disabled = true;
+    return;
+  }
+  if (a.length < 6) {
+    forgotMsg.textContent = "Password must be at least 6 characters.";
+    forgotBtn.disabled = true;
+    return;
+  }
+  if (a !== b) {
+    forgotMsg.textContent = "Passwords do not match.";
+    forgotBtn.disabled = true;
+    return;
+  }
+  forgotMsg.textContent = "";
+  forgotBtn.disabled = false;
+}
+
+// attach listeners (defensive: only attach if DOM elements exist)
+if (forgotNewInput && forgotConfirmInput) {
+  forgotNewInput.addEventListener("input", validateForgotPasswords);
+  forgotConfirmInput.addEventListener("input", validateForgotPasswords);
+}
+
+// ---------- Submit forgot-password ----------
+async function submitForgotPassword(){
+  const username = document.getElementById("forgot-username").value.trim();
+  const newPassword = document.getElementById("forgot-new-password").value.trim();
+  const msg = document.getElementById("forgot-msg");
+  const btn = document.getElementById("forgot-btn");
+
+  msg.textContent = "";
+  btn.disabled = true;
+  btn.textContent = "Resetting...";
+
+  if (!username || !newPassword) {
+    msg.textContent = "Please fill all fields.";
+    btn.disabled = false;
+    btn.textContent = "Reset Password";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${backendURL}/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: username, new_password: newPassword })
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok) {
+      msg.style.color = "green";
+      msg.textContent = "Password reset successful. Please login.";
+      setTimeout(() => {
+        closeForgotModal();
+        showLogin();
+        document.getElementById("login-message").textContent = "Password reset successful! Please login.";
+      }, 1200);
+    } else {
+      // show backend-provided error
+      msg.style.color = "red";
+      msg.textContent = data.detail || "Password reset failed.";
+    }
+  } catch (err) {
+    msg.style.color = "red";
+    msg.textContent = "Network error. Is the backend running?";
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Reset Password";
+}
+
+// wire button click
+if (forgotBtn) {
+  forgotBtn.addEventListener("click", submitForgotPassword);
+}
+
+
+    function normalizeCityName(city) {
+      city = city.trim().toLowerCase();
+      return city.charAt(0).toUpperCase() + city.slice(1);
+    }
+
+    async function getWeather(city = null) {
+      if (!city) city = document.getElementById("cityInput").value.trim();
+      city = normalizeCityName(city);
+      const weatherDiv = document.getElementById("weather");
+      if (!jwtToken) {
+        weatherDiv.innerHTML = "<p class='text-red-600'>Please log in first.</p>";
+        return;
+      }
+      if (!city) {
+        weatherDiv.innerHTML = "<p class='text-red-600'>Please enter a city name.</p>";
+        return;
+      }
+      weatherDiv.innerHTML = `<p class="text-blue-600">⏳ Fetching weather for ${city}...</p>`;
+      try {
+        const res = await fetch(`${backendURL}/weather?city=${encodeURIComponent(city)}`, {
+          headers: { Authorization: `Bearer ${jwtToken}` }
+        });
+        if (res.status === 401) {
+          weatherDiv.innerHTML = `<p class="text-red-600">Session expired. Please log in again.</p>`;
+          logout();
+          return;
+        }
+        const data = await res.json();
+        if (!res.ok) {
+          weatherDiv.innerHTML = `<p class="text-red-600">❌ ${data.detail || "Error fetching weather"}</p>`;
+          return;
+        }
+
+        // -change background based on weather condition
+updateDynamicBackground(data.condition);
+        let html = `
+          <div class="bg-white shadow-md rounded-xl p-4 w-full md:w-1/2">
+            <h2 class="text-2xl font-semibold mb-3">${data.city}</h2>
+            <p><strong>🌡️ Temp:</strong> ${data.temperature}</p>
+            <p><strong>☁️ Condition:</strong> ${data.condition}</p>
+            <p><strong>💨 Wind:</strong> ${data.wind}</p>
+            <p><strong>💧 Humidity:</strong> ${data.humidity}</p>
+            <p class="text-sm text-gray-500">🕒 ${data.time} 📅 ${data.date}</p>
+            <button onclick="addFavorite('${data.city}')" class="mt-4 bg-yellow-400 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-500 transition">⭐ Add to Favorites</button>
+          </div>
+        `;
+        html += `<div id="forecast" class="bg-white shadow-md rounded-xl p-4 w-full md:w-1/2"><p class="text-gray-500">⏳ Loading forecast...</p></div>`;
+        weatherDiv.innerHTML = `<div class="flex flex-col md:flex-row gap-4">${html}</div>`;
+        getForecast(city);
+        updateRecentSearches(city);
+        updateFavorites();
+      } catch (error) {
+        weatherDiv.innerHTML = `<p class="text-red-600">❌ Error: ${error}</p>`;
+      }
+    }
+
+    async function getForecast(city) {
+      const forecastDiv = document.getElementById("forecast");
+      try {
+        const res = await fetch(`${backendURL}/forecast?city=${encodeURIComponent(city)}`, {
+          headers: { Authorization: `Bearer ${jwtToken}` }
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          forecastDiv.innerHTML = `<p class="text-red-600">❌ ${err.detail || "Error fetching forecast"}</p>`;
+          return;
+        }
+        const data = await res.json();
+        if (!Array.isArray(data.forecast)) {
+          forecastDiv.innerHTML = `<p class="text-red-600">⚠️ Forecast data unavailable</p>`;
+          return;
+        }
+        let html = `<h3 class="text-xl font-semibold mb-3">📅 Forecast</h3><div class="flex gap-3 overflow-x-auto pb-2">`;
+        data.forecast.forEach(day => {
+          html += `<div class="border rounded-lg p-3 shadow-sm"><p><strong>${day.date}</strong></p><p>🌡️ ${day.temperature}</p><p>☁️ ${day.condition}</p><p>💨 ${day.wind}</p><p>💧 ${day.humidity}</p></div>`;
+        });
+        html += `</div>`;
+        forecastDiv.innerHTML = html;
+      } catch (error) {
+        forecastDiv.innerHTML = `<p class="text-red-600">❌ Error: ${error}</p>`;
+      }
+    }
+
+    function updateRecentSearches(city) {
+      if (!recentSearches.includes(city)) {
+        recentSearches.unshift(city);
+        if (recentSearches.length > 5) recentSearches.pop();
+      }
+      const recentDiv = document.getElementById("recent");
+      let html = `<h2 class="text-xl font-semibold mb-4">Recent Searches</h2><ul class="space-y-2">`;
+      recentSearches.forEach(c => {
+        html += `<li class="flex justify-between items-center bg-gray-50 p-2 rounded-lg shadow"><span>${c}</span><button onclick="getWeather('${c}')" class="text-blue-600 hover:underline">View</button></li>`;
+      });
+      html += `</ul>`;
+      recentDiv.innerHTML = recentSearches.length ? html : `<p class="text-gray-500">No recent searches yet 🔍</p>`;
+    }
+
+    function updateFavorites() {
+      const favDiv = document.getElementById("favorites");
+      let html = `<h2 class="text-xl font-semibold mb-4">Favorites</h2><ul class="space-y-2">`;
+      favorites.forEach(c => {
+        html += `<li class="flex justify-between items-center bg-gray-50 p-2 rounded-lg shadow"><span>${c}</span><button onclick="getWeather('${c}')" class="text-blue-600 hover:underline">View</button></li>`;
+      });
+      html += `</ul>`;
+      favDiv.innerHTML = favorites.length ? html : `<p class="text-gray-500">No favorites yet ⭐</p>`;
+    }
+
+    function addFavorite(city) {
+      if (!favorites.includes(city)) {
+        favorites.push(city);
+        updateFavorites();
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+     
+      localStorage.removeItem("jwtToken"); // 🔑 Clears token every time
+      document.getElementById("login-btn").addEventListener("click", login);
+     
+    });
+    //---geolocation
+    async function geolocation() {
+  const weatherDiv = document.getElementById("weather");
+  if (!jwtToken) {
+    weatherDiv.innerHTML = "<p class='text-red-600'>Please log in first.</p>";
+    return;
+  }
+
+  // Ask for location
+  if (!navigator.geolocation) {
+    weatherDiv.innerHTML = "<p class='text-red-600'>❌ Geolocation not supported by your browser.</p>";
+    return;
+  }
+
+  weatherDiv.innerHTML = `<p class="text-blue-600">📍 Getting your location...</p>`;
+
+  navigator.geolocation.getCurrentPosition(async (position) => {
+    const { latitude, longitude } = position.coords;
+
+    try {
+      // Fetch weather by coordinates
+      const res = await fetch(`${backendURL}/weather-by-coords?lat=${latitude}&lon=${longitude}`, {
+        headers: { Authorization: `Bearer ${jwtToken}` }
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        weatherDiv.innerHTML = `<p class="text-red-600">❌ ${data.detail || "Error fetching weather"}</p>`;
+        return;
+      }
+      //--change background based on weather condition
+updateDynamicBackground(data.condition);
+
+      // Display current weather
+      let html = `
+        <div class="bg-white shadow-md rounded-xl p-4 w-full md:w-1/2">
+          <h2 class="text-2xl font-semibold mb-3">${data.city}</h2>
+          <p><strong>🌡️ Temp:</strong> ${data.temperature}</p>
+          <p><strong>☁️ Condition:</strong> ${data.condition}</p>
+          <p><strong>💨 Wind:</strong> ${data.wind}</p>
+          <p><strong>💧 Humidity:</strong> ${data.humidity}</p>
+          <p class="text-sm text-gray-500">🕒 ${data.time} 📅 ${data.date}</p>
+          <button onclick="addFavorite('${data.city}')" class="mt-4 bg-yellow-400 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-500 transition">⭐ Add to Favorites</button>
+        </div>
+      `;
+      html += `<div id="forecast" class="bg-white shadow-md rounded-xl p-4 w-full md:w-1/2"><p class="text-gray-500">⏳ Loading forecast...</p></div>`;
+      weatherDiv.innerHTML = `<div class="flex flex-col md:flex-row gap-4">${html}</div>`;
+
+      // Load forecast for that city
+      getForecast(data.city);
+      updateRecentSearches(data.city);
+      updateFavorites();
+
+    } catch (error) {
+      weatherDiv.innerHTML = `<p class="text-red-600">❌ Error: ${error.message}</p>`;
+    }
+  }, (error) => {
+    weatherDiv.innerHTML = `<p class="text-red-600">⚠️ Unable to get location: ${error.message}</p>`;
+  });
+}
+// 🌈 Change background based on weather condition
+function updateDynamicBackground(condition) {
+  const body = document.body;
+  body.classList.remove(
+    "from-blue-400", "to-blue-600",  // default
+    "from-yellow-300", "to-orange-500",  // sunny
+    "from-gray-400", "to-gray-600",      // cloudy
+    "from-sky-400", "to-blue-700",       // clear
+    "from-indigo-500", "to-blue-900",    // night
+    "from-gray-700", "to-gray-900",      // stormy
+    "from-blue-500", "to-gray-700"       // rainy
+  );
+
+  const lower = condition.toLowerCase();
+
+  if (lower.includes("rain")) {
+    body.classList.add("from-blue-500", "to-gray-700");
+  } else if (lower.includes("cloud")) {
+    body.classList.add("from-gray-400", "to-gray-600");
+  } else if (lower.includes("sun") || lower.includes("clear")) {
+    body.classList.add("from-yellow-300", "to-orange-500");
+  } else if (lower.includes("storm") || lower.includes("thunder")) {
+    body.classList.add("from-gray-700", "to-gray-900");
+  } else if (lower.includes("snow")) {
+    body.classList.add("from-blue-200", "to-white");
+  } else if (lower.includes("night")) {
+    body.classList.add("from-indigo-500", "to-blue-900");
+  } else {
+    // Default gradient
+    body.classList.add("from-blue-400", "to-blue-600");
+  }
+}
+
+
+  </script>
+  <footer class="bg-gray-900 text-gray-400 py-6 mt-10">
+  <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between">
+    
+    <!-- Footer-->
+    <div class="text-lg font-semibold text-white">
+      Dennis Mwangi Designs
+    </div>
+    
+   
+    
+    <!-- Copyright -->
+    <div class="mt-4 md:mt-0 text-sm">
+      <i class="fa fa-copyright" aria-hidden="true"></i>
+      <span> 2025 Dennis Mwangi Designs. All rights reserved.</span>
+    </div>
+    
+  </div>
+</footer>
+
+
+
+</body>
+</html>
