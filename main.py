@@ -282,8 +282,11 @@ def get_weather_from_api_by_coords(lat: float, lon: float):
 # --- Run app on Render ---
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 10000))  # Render dynamically assigns a port
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+    import os
+
+    port = int(os.getenv("PORT", 10000))
+    print(f"🚀 Starting Uvicorn server on port {port}")
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
 
 # --- Subscribe Route ---
 @app.post("/subscribe")
