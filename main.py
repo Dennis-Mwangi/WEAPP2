@@ -273,9 +273,6 @@ def get_weather_from_api_by_coords(lat: float, lon: float):
         
             
     }
-@app.get("/")
-def home():
-    return {"message": "Weather API running. Use /register and /token to login."}
 
 # --- Subscribe Route ---
 @app.post("/subscribe")
