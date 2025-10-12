@@ -509,6 +509,13 @@ function updateDynamicBackground(condition) {
     body.classList.add("from-blue-400", "to-blue-600");
   }
 }
+const backendUrl = "https://weapp2.onrender.com";  // your Render backend URL
+
+fetch(`${backendUrl}/token`, {
+  method: "POST",
+  body: JSON.stringify({ username, password }),
+  headers: { "Content-Type": "application/json" }
+})
 
 
   </script>

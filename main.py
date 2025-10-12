@@ -14,6 +14,8 @@ import os
 import json
 import sqlite3
 import logging
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # --- Logging Setup ---
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +30,15 @@ DB_PATH = "weather.db"
 
 # --- FastAPI App ---
 app = FastAPI()
+
+
+# Serve static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Serve index.html
+@app.get("/")
+def read_index():
+    return FileResponse(os.path.join("static", "index.html"))
 
 app.add_middleware(
     CORSMiddleware,
