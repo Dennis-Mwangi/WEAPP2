@@ -87,7 +87,7 @@ def get_db():
         db.close()
 
 def verify_password(plain, hashed):
-    return pwd_context.verify(plain, hashed)
+    return pwd_context.verify(plain[:72], hashed)
 
 def get_user(db, username: str):
     logger.info(f"Searching user: {username}")
@@ -182,7 +182,7 @@ def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == req.username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    user.hashed_password = pwd_context.hash(req.new_password)
+    user.hashed_password = pwd_context.hash(req.new_password[:72]) # bcrypt limit
     db.commit()
     logger.info(f"Password reset for user: {req.username}")
     return {"message": "Password reset successful"}
