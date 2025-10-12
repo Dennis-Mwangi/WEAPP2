@@ -86,7 +86,11 @@
 
   <!-- Fixed Working JavaScript -->
   <script>
-    const backendURL = "https://weapp2.onrender.com";
+    // For local testing
+const backendURL = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
+    ? "http://127.0.0.1:8000"
+    : "https://weapp2.onrender.com";
+
 
     let jwtToken = localStorage.getItem("jwtToken") || null;
     let recentSearches = [];

@@ -40,6 +40,12 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def read_index():
     return FileResponse(os.path.join("static", "index.html"))
 
+# ---------- CORS (allow your frontend to talk to backend) ----------
+origins = [
+    "http://localhost:5500",        # if testing frontend locally
+    "http://127.0.0.1:5500",       # if testing frontend locally
+    "https://weapp2.onrender.com"  # your deployed frontend
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Change in production
@@ -150,7 +156,7 @@ if os.getenv("CREATE_DEMO_USER", "1") == "1":
 def register(user: RegisterUser, db: Session = Depends(get_db)):
     if get_user(db, user.username):
         raise HTTPException(status_code=400, detail="Username already exists")
-    hashed_password = pwd_context.hash(user.password)
+    hashed_password = pwd_context.hash(user.password[:72])  # bcrypt limit
     new_user = User(username=user.username, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
