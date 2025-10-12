@@ -86,7 +86,8 @@
 
   <!-- Fixed Working JavaScript -->
   <script>
-    const backendURL = "http://127.0.0.1:8000";
+    const backendURL = "https://weapp2.onrender.com";
+
     let jwtToken = localStorage.getItem("jwtToken") || null;
     let recentSearches = [];
     let favorites = [];
@@ -509,13 +510,6 @@ function updateDynamicBackground(condition) {
     body.classList.add("from-blue-400", "to-blue-600");
   }
 }
-const backendUrl = "https://weapp2.onrender.com";  // your Render backend URL
-
-fetch(`${backendUrl}/token`, {
-  method: "POST",
-  body: JSON.stringify({ username, password }),
-  headers: { "Content-Type": "application/json" }
-})
 
 
   </script>
