@@ -2,7 +2,7 @@ const CACHE_NAME = "weather-app-cache-v1";
 const urlsToCache = [
   "/",
   "/index.html",
-  "/public/manifest.json",
+  "/manifest.json",
   "/icons/icon-192x192.png",
   "/icons/icon-512x512.png"
 ];
