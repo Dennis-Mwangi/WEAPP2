@@ -142,7 +142,7 @@ def create_demo_user():
     username = "user@example.com"
     password = "password123"
     if not get_user(db, username):
-        hashed_password = pwd_context.hash(password)
+        hashed_password = pwd_context.hash(password[:72])  # bcrypt limit
         db.add(User(username=username, hashed_password=hashed_password))
         db.commit()
         logger.info("Demo user created")
