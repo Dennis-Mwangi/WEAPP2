@@ -40,11 +40,22 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def read_index():
     return FileResponse(os.path.join("static", "index.html"))
 
+
+# Route for manifest.json
+@app.get("/manifest.json")
+def manifest():
+    return FileResponse(os.path.join("static", "manifest.json"))
+
+# Route for service-worker.js
+@app.get("/service-worker.js")
+def service_worker():
+    return FileResponse(os.path.join("static", "service-worker.js"), media_type="application/javascript")
+
 # ---------- CORS (allow your frontend to talk to backend) ----------
 origins = [
-    "http://localhost:5500",        # if testing frontend locally
-    "http://127.0.0.1:5500",       # if testing frontend locally
-    "https://weapp2.onrender.com"  # your deployed frontend
+    "http://localhost:5500",        # Local testing frontend 
+    "http://127.0.0.1:5500",       # frontend locally
+    "https://weapp2.onrender.com"  # your deployed frontend-render
 ]
 app.add_middleware(
     CORSMiddleware,
