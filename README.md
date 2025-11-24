@@ -15,5 +15,5 @@
  Tech Stack
 
 - **Frontend**: HTML5, CSS3, TailwindCSS, JavaScript  
-- **Backend**: REST API endpoints (`/weather` and `/forecast`) with JWT authentication  
+- **Backend**: FAST API endpoints (`/weather` and `/forecast`) with JWT authentication  
 - **Storage**: LocalStorage for favorites and recent searches
